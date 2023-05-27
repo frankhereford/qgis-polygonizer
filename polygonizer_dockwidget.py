@@ -44,6 +44,10 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # http://doc.qt.io/qt-5/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
+        self.printHelloWorld.clicked.connect(self.print_hello_world)
+
+    def print_hello_world(self):
+        print('Hello World')
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
