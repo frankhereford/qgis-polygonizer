@@ -73,35 +73,53 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         #print()
 
         # create layer
-        vl = QgsVectorLayer("MultiLineString", "temporary_lines", "memory")
+        selected_features_layer = QgsVectorLayer("MultiLineString", "Selected Features", "memory")
         crs = QgsCoordinateReferenceSystem("EPSG:2277")
-        vl.setCrs(crs)
-        pr = vl.dataProvider()
-        vl.updateFields()
+        selected_features_layer.setCrs(crs)
+        selected_features_provider = selected_features_layer.dataProvider()
+        selected_features_layer.updateFields()
 
         active_layer = iface.activeLayer()
         selected_features = active_layer.selectedFeatures()
         for feature in selected_features:
-            print("Feature ID:", type(feature))
-            print("Feature ID:", feature.id())
-            print("Feature attributes:", feature.attributes())
-            print("Feature geometry:", feature.geometry())
-            pr.addFeatures([feature])
+            #print("Feature ID:", type(feature))
+            #print("Feature ID:", feature.id())
+            #print("Feature attributes:", feature.attributes())
+            #print("Feature geometry:", feature.geometry())
+            selected_features_provider.addFeatures([feature])
             print()
 
-        vl.updateExtents()
+        selected_features_layer.updateExtents()
 
-        print("fields:", len(pr.fields()))
-        print("features:", pr.featureCount())
-        e = vl.extent()
-        print("extent:", e.xMinimum(), e.yMinimum(), e.xMaximum(), e.yMaximum())
+        #print("fields:", len(pr.fields()))
+        #print("features:", pr.featureCount())
+        #e = vl.extent()
+        #print("extent:", e.xMinimum(), e.yMinimum(), e.xMaximum(), e.yMaximum())
 
         # iterate over features
-        features = vl.getFeatures()
-        for fet in features:
-            print("F:", fet.id(), fet.attributes(), fet.geometry().asWkt())
+        features = selected_features_layer.getFeatures()
+        list_of_features = list(features)
+        #for fet in features:
+            #print("F:", fet.id(), fet.attributes(), fet.geometry().asWkt())
 
-        project.addMapLayer(vl)
+        #print("list of features:", list_of_features)
+
+        intersection_layer = QgsVectorLayer('Point?crs=EPSG:2277', 'Intersection Points', 'memory')
+        intersection_provider = intersection_layer.dataProvider()
+
+        for i in range(len(list_of_features)):
+            for j in range(i+1, len(list_of_features)):
+                #print(f"Comparing {list_of_features[i].id()} and {list_of_features[j].id()}")
+                intersection = list_of_features[i].geometry().intersection(list_of_features[j].geometry())
+                #print("Intersection:", intersection)
+                intersection_feature = QgsFeature()
+                intersection_feature.setGeometry(intersection)
+                intersection_provider.addFeature(intersection_feature)
+        
+        intersection_layer.updateExtents()
+        
+        #project.addMapLayer(vl)
+        project.addMapLayer(intersection_layer)
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
