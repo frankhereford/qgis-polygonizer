@@ -74,7 +74,7 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         #print()
 
         # create layer
-        selected_features_layer = QgsVectorLayer("MultiLineString", "Selected Features", "memory")
+        selected_features_layer = QgsVectorLayer("MultiLineString", "Workspace: Selected Features", "memory")
         crs = QgsCoordinateReferenceSystem("EPSG:2277")
         selected_features_layer.setCrs(crs)
         selected_features_provider = selected_features_layer.dataProvider()
@@ -88,7 +88,7 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             #print("Feature attributes:", feature.attributes())
             #print("Feature geometry:", feature.geometry())
             selected_features_provider.addFeatures([feature])
-            print()
+            #print()
 
         selected_features_layer.updateExtents()
 
@@ -105,7 +105,7 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         #print("list of features:", list_of_features)
 
-        intersection_layer = QgsVectorLayer('Point?crs=EPSG:2277', 'Intersection Points', 'memory')
+        intersection_layer = QgsVectorLayer('Point?crs=EPSG:2277', 'Workspace: Intersection Points', 'memory')
         intersection_provider = intersection_layer.dataProvider()
 
         for i in range(len(list_of_features)):
@@ -119,7 +119,24 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         
         intersection_layer.updateExtents()
         
-        #project.addMapLayer(vl)
+        index = QgsSpatialIndex()
+        delete_ids = []
+        for feature in intersection_layer.getFeatures():
+            # If the feature's geometry is already in the index, then it's a duplicate
+            if list(index.intersects(feature.geometry().boundingBox())):
+                # Store the feature's ID in our list of features to delete
+                delete_ids.append(feature.id())
+            else:
+                # If it's not in the index, add it now
+                index.addFeature(feature)
+
+        print("Delete IDs:", delete_ids)
+
+        with edit(intersection_layer):
+            intersection_layer.deleteFeatures(delete_ids)
+
+        
+        project.addMapLayer(selected_features_layer)
         project.addMapLayer(intersection_layer)
 
     def closeEvent(self, event):
