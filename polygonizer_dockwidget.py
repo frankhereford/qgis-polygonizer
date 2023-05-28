@@ -64,12 +64,13 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         project = QgsProject.instance()
 
 
-        #layers = project.mapLayers()
+        layers = project.mapLayers()
         #print("Layers:")
-        #print(layers)
-        #for layer_key in layers:
-            #layer = layers[layer_key]
-            #print("Layer", layer.id(), "is a", layer.type())
+        for layer_key in layers:
+            layer = layers[layer_key]
+            if layer.id().startswith("Workspace_"):
+                #print("Layer", layer.id(), "is a", layer.type())
+                project.removeMapLayer(layer.id())
         #print()
 
         # create layer
