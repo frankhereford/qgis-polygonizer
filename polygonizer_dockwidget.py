@@ -60,6 +60,14 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.setupUi(self)
         self.printHelloWorld.clicked.connect(self.eventPushButtonDoSomethingOnClick)
 
+    def compute_subsections(self, total_length, goal_length):
+        if goal_length >= total_length:
+            return 1, total_length
+        else:
+            num_subsections = round(total_length / goal_length)
+            actual_length = total_length / num_subsections
+            return num_subsections, actual_length
+
     def eventPushButtonDoSomethingOnClick(self):
         project = QgsProject.instance()
 
@@ -74,11 +82,10 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         #print()
 
         # create layer
-        selected_features_layer = QgsVectorLayer("MultiLineString", "Workspace: Selected Features", "memory")
+        selected_features_layer = QgsVectorLayer("LineString", "Workspace: Selected Features", "memory")
         crs = QgsCoordinateReferenceSystem("EPSG:2277")
         selected_features_layer.setCrs(crs)
         selected_features_provider = selected_features_layer.dataProvider()
-        selected_features_layer.updateFields()
 
         active_layer = iface.activeLayer()
         selected_features = active_layer.selectedFeatures()
@@ -125,9 +132,72 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         with edit(intersection_layer):
             intersection_layer.deleteFeatures(delete_ids)
 
+
+        segmented_roads_layer = QgsVectorLayer("LineString", "Workspace: Segments", "memory")
+        crs = QgsCoordinateReferenceSystem("EPSG:2277")
+        segmented_roads_layer.setCrs(crs)
+        segmented_roads_provider = segmented_roads_layer.dataProvider()
+
+        for intersection in intersection_layer.getFeatures():
+            print("Intersection:", intersection.id())
+            for road in selected_features_layer.getFeatures():
+                if intersection.geometry().intersects(road.geometry()):
+                    print(f"Intersection {intersection.id()} intersects road {road.id()} of length {road.geometry().length()} feet.")
+
+                    subsections = self.compute_subsections(road.geometry().length(), 200) # second argument is goal length in feet
+                    print("Subsections: (count, practical_length)", subsections)
+
+                    for i in range(subsections[0]):
+                        start_point = road.geometry().interpolate(i * subsections[1]).asPoint()
+                        end_point = road.geometry().interpolate((i + 1) * subsections[1]).asPoint()
+                        print("Start point:", start_point)
+                        print("End point:", end_point)
+
+                        start_distance = road.geometry().lineLocatePoint(QgsGeometry.fromPointXY(start_point))
+                        end_distance = road.geometry().lineLocatePoint(QgsGeometry.fromPointXY(end_point))
+                        print("Start distance:", start_distance)
+                        print("End distance:", end_distance)
+
+                        if start_distance > end_distance:
+                            start_distance, end_distance = end_distance, start_distance
+
+                        print("Type: ", type(road.geometry()))
+                        multiline = road.geometry().asMultiPolyline()
+
+                        # Flatten the list of lists to get a single list of points
+                        points = [point for sublist in multiline for point in sublist]
+
+                        # Create a LineString from these points
+                        linestring = QgsLineString(points)
+
+                        #linestring = QgsLineString(road.geometry().asPolyline())
+                        segment = linestring.curveSubstring(start_distance, end_distance)
+
+                        segment_feature = QgsFeature()
+                        segment_feature.setGeometry(QgsGeometry.fromPolyline(segment))
+                        
+                        segmented_roads_provider.addFeatures([segment_feature])
+
+                    #start_point = road.geometry().interpolate(i * subsections[1]).asPoint()
+                    #end_point = road.geometry().interpolate((i + 1) * subsections[1]).asPoint()
+                    #print("Start point:", start_point)
+                    #print("End point:", end_point)
+                    
+                    #segment = QgsFeature()
+                    #segment.setGeometry(QgsGeometry.fromPolylineXY([start_point, end_point]))
+                    #segmented_roads_provider.addFeatures([segment])
+
+
+                    #intersection["road_id"] = road.id()
+                    #intersection_layer.updateFeature(intersection)
+        
+        intersection_layer.updateExtents()
+        
+
         
         project.addMapLayer(selected_features_layer)
         project.addMapLayer(intersection_layer)
+        project.addMapLayer(segmented_roads_layer)
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
