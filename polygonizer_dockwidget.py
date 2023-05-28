@@ -86,28 +86,18 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             #print("Feature ID:", type(feature))
             #print("Feature ID:", feature.id())
             #print("Feature attributes:", feature.attributes())
-            #print("Feature geometry:", feature.geometry())
+            #print("Feature geometry:", feature.geometry().asWkt()) 
             selected_features_provider.addFeatures([feature])
             #print()
 
         selected_features_layer.updateExtents()
 
-        #print("fields:", len(pr.fields()))
-        #print("features:", pr.featureCount())
-        #e = vl.extent()
-        #print("extent:", e.xMinimum(), e.yMinimum(), e.xMaximum(), e.yMaximum())
-
-        # iterate over features
-        features = selected_features_layer.getFeatures()
-        list_of_features = list(features)
-        #for fet in features:
-            #print("F:", fet.id(), fet.attributes(), fet.geometry().asWkt())
-
-        #print("list of features:", list_of_features)
-
         intersection_layer = QgsVectorLayer('Point?crs=EPSG:2277', 'Workspace: Intersection Points', 'memory')
         intersection_provider = intersection_layer.dataProvider()
 
+        # iterate over features, find intersecting features, so we can create a point at each intersection
+        features = selected_features_layer.getFeatures()
+        list_of_features = list(features)
         for i in range(len(list_of_features)):
             for j in range(i+1, len(list_of_features)):
                 #print(f"Comparing {list_of_features[i].id()} and {list_of_features[j].id()}")
@@ -119,6 +109,7 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         
         intersection_layer.updateExtents()
         
+        # Delete duplicate features, so we have a single intersection point for each intersection
         index = QgsSpatialIndex()
         delete_ids = []
         for feature in intersection_layer.getFeatures():
@@ -129,8 +120,7 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             else:
                 # If it's not in the index, add it now
                 index.addFeature(feature)
-
-        print("Delete IDs:", delete_ids)
+        #print("Delete IDs:", delete_ids)
 
         with edit(intersection_layer):
             intersection_layer.deleteFeatures(delete_ids)
