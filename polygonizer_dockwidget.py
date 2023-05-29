@@ -76,6 +76,8 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         print(geometry.asJson())
 
     def eventPushButtonDoSomethingOnClick(self):
+        
+
         project = QgsProject.instance()
 
 
@@ -153,9 +155,9 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         intersection_polygons_layer = QgsVectorLayer("Polygon?crs=EPSG:2277", f"Workspace: Intersection Polygons", "memory")
         intersection_polygons_provider = intersection_polygons_layer.dataProvider()
 
-        GOAL_SEGMENT_LENGTH = 100
-        GOAL_LEG_LENGTH = 500
-        BUFFER_LENGTH = 50
+        GOAL_SEGMENT_LENGTH = self.goalSegmentLength.value()
+        GOAL_LEG_LENGTH = self.goalLegLength.value()
+        BUFFER_LENGTH = self.polygonWidth.value()
         BUFFER_DETAIL = 20
 
         if False:
@@ -211,6 +213,7 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     LEG_LENGTH = GOAL_LEG_LENGTH
                     # we have a road that is a leg, let's compute the length of the leg
                     # FIXME we need some snapping flexibility, because this can leave slivers
+                    # FIXME we need to detect cul-de-sacs and extend the leg the length of them, possibly splitting it up
                     if road.geometry().length() < LEG_LENGTH * 2:
                         LEG_LENGTH = road.geometry().length() / 2
 
@@ -265,8 +268,6 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 buffered_leg.setGeometry(buffer)
                 leg_segments_buffer_provider.addFeature(buffered_leg)
 
-
-
             intersection_buffer = intersection.geometry().buffer(distance=BUFFER_LENGTH, segments=BUFFER_DETAIL)
             buffered_intersection = QgsFeature()
             buffered_intersection.setGeometry(intersection_buffer)
@@ -279,7 +280,6 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             union_geometry = QgsGeometry.unaryUnion(geometries)
             union_feature = QgsFeature()
             union_feature.setGeometry(union_geometry)
-            #self.print_tx_geometry_as_geojson(union_geometry)
             intersection_polygons_provider.addFeature(union_feature)
 
             leg_segments_layer.updateExtents()
@@ -294,10 +294,9 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         #leg_end_points_layer.updateExtents()
         #leg_segments_layer.updateExtents()
         
-
         
         #project.addMapLayer(selected_features_layer)
-        #project.addMapLayer(intersection_layer)
+        project.addMapLayer(intersection_layer)
         #project.addMapLayer(segmented_roads_layer)
         #project.addMapLayer(leg_end_points_layer)
 
