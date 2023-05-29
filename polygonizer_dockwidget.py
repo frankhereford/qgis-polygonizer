@@ -133,71 +133,115 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             intersection_layer.deleteFeatures(delete_ids)
 
 
+        intersection_layer.updateExtents()
+
         segmented_roads_layer = QgsVectorLayer("LineString", "Workspace: Segments", "memory")
         crs = QgsCoordinateReferenceSystem("EPSG:2277")
         segmented_roads_layer.setCrs(crs)
         segmented_roads_provider = segmented_roads_layer.dataProvider()
 
+        #leg_end_points_layer = QgsVectorLayer('Point?crs=EPSG:2277', 'Workspace: Leg Endpoints', 'memory')
+        #leg_end_points_provider = leg_end_points_layer.dataProvider()
+
+
+
+        GOAL_SEGMENT_LENGTH = 100
+        GOAL_LEG_LENGTH = 150
+
+        if False:
+            for intersection in intersection_layer.getFeatures():
+                print("Intersection:", intersection.id())
+                for road in selected_features_layer.getFeatures():
+                    if intersection.geometry().intersects(road.geometry()):
+                        #print(f"Intersection {intersection.id()} intersects road {road.id()} of length {road.geometry().length()} feet.")
+
+                        # this makes plain subsection features
+                        subsections = self.compute_subsections(road.geometry().length(), GOAL_SEGMENT_LENGTH)
+                        #print("Subsections: (count, practical_length)", subsections)
+                        # this makes a feature layer of equally length segments.
+                        for i in range(subsections[0]):
+                            start_point = road.geometry().interpolate(i * subsections[1]).asPoint()
+                            end_point = road.geometry().interpolate((i + 1) * subsections[1]).asPoint()
+                            #print("Start point:", start_point)
+                            #print("End point:", end_point)
+                            start_distance = road.geometry().lineLocatePoint(QgsGeometry.fromPointXY(start_point))
+                            end_distance = road.geometry().lineLocatePoint(QgsGeometry.fromPointXY(end_point))
+                            #print("Start distance:", start_distance)
+                            #print("End distance:", end_distance)
+                            if start_distance > end_distance:
+                                start_distance, end_distance = end_distance, start_distance
+                            multiline = road.geometry().asMultiPolyline()
+                            # Convert to LineString (it's up to you to not hand it a disjointed MultiLineString)
+                            points = [point for sublist in multiline for point in sublist]
+                            # Create a LineString from these points
+                            linestring = QgsLineString(points)
+                            segment = linestring.curveSubstring(start_distance, end_distance)
+                            segment_feature = QgsFeature()
+                            segment_feature.setGeometry(QgsGeometry.fromPolyline(segment))
+                            segmented_roads_provider.addFeatures([segment_feature])
+
+
         for intersection in intersection_layer.getFeatures():
             print("Intersection:", intersection.id())
+
+            # create a layer for the leg segments
+            leg_segments_layer = QgsVectorLayer("LineString", f"Workspace: Intersection {intersection.id()} Legs", "memory")
+            crs = QgsCoordinateReferenceSystem("EPSG:2277")
+            leg_segments_layer.setCrs(crs)
+            leg_segments_provider = leg_segments_layer.dataProvider()
+
             for road in selected_features_layer.getFeatures():
                 if intersection.geometry().intersects(road.geometry()):
                     print(f"Intersection {intersection.id()} intersects road {road.id()} of length {road.geometry().length()} feet.")
+                    LEG_LENGTH = GOAL_LEG_LENGTH
+                    # we have a road that is a leg, let's compute the length of the leg
+                    # FIXME we need some snapping flexibility, because this can leave slivers
+                    if road.geometry().length() < LEG_LENGTH * 2:
+                        LEG_LENGTH = road.geometry().length() / 2
 
-                    subsections = self.compute_subsections(road.geometry().length(), 200) # second argument is goal length in feet
-                    print("Subsections: (count, practical_length)", subsections)
+                    print("Leg length:", LEG_LENGTH)
 
-                    for i in range(subsections[0]):
-                        start_point = road.geometry().interpolate(i * subsections[1]).asPoint()
-                        end_point = road.geometry().interpolate((i + 1) * subsections[1]).asPoint()
-                        print("Start point:", start_point)
-                        print("End point:", end_point)
+                    if False:
+                        left_leg_end_point = road.geometry().interpolate(LEG_LENGTH).asPoint()
+                        right_leg_end_point = road.geometry().interpolate(road.geometry().length() - LEG_LENGTH).asPoint()
 
-                        start_distance = road.geometry().lineLocatePoint(QgsGeometry.fromPointXY(start_point))
-                        end_distance = road.geometry().lineLocatePoint(QgsGeometry.fromPointXY(end_point))
-                        print("Start distance:", start_distance)
-                        print("End distance:", end_distance)
+                        left_leg_end_point_feature = QgsFeature()
+                        left_leg_end_point_feature.setGeometry(QgsGeometry.fromPointXY(left_leg_end_point))
+                        leg_end_points_provider.addFeature(left_leg_end_point_feature)
 
-                        if start_distance > end_distance:
-                            start_distance, end_distance = end_distance, start_distance
+                        right_leg_end_point_feature = QgsFeature()
+                        right_leg_end_point_feature.setGeometry(QgsGeometry.fromPointXY(right_leg_end_point))
+                        leg_end_points_provider.addFeature(right_leg_end_point_feature)
 
-                        print("Type: ", type(road.geometry()))
-                        multiline = road.geometry().asMultiPolyline()
+                    multiline = road.geometry().asMultiPolyline()
+                    # Convert to LineString (it's up to you to not hand it a disjointed MultiLineString)
+                    points = [point for sublist in multiline for point in sublist]
+                    # Create a LineString from these points
+                    linestring = QgsLineString(points)
 
-                        # Flatten the list of lists to get a single list of points
-                        points = [point for sublist in multiline for point in sublist]
+                    left_leg  = linestring.curveSubstring(0, LEG_LENGTH)
+                    right_leg = linestring.curveSubstring(linestring.length() - LEG_LENGTH, linestring.length())
 
-                        # Create a LineString from these points
-                        linestring = QgsLineString(points)
+                    left_leg_feature = QgsFeature()
+                    left_leg_feature.setGeometry(QgsGeometry.fromPolyline(left_leg))
+                    leg_segments_provider.addFeatures([left_leg_feature])
 
-                        #linestring = QgsLineString(road.geometry().asPolyline())
-                        segment = linestring.curveSubstring(start_distance, end_distance)
+                    right_leg_feature = QgsFeature()
+                    right_leg_feature.setGeometry(QgsGeometry.fromPolyline(right_leg))
+                    leg_segments_provider.addFeatures([right_leg_feature])
 
-                        segment_feature = QgsFeature()
-                        segment_feature.setGeometry(QgsGeometry.fromPolyline(segment))
-                        
-                        segmented_roads_provider.addFeatures([segment_feature])
+            leg_segments_layer.updateExtents()
+            project.addMapLayer(leg_segments_layer)
 
-                    #start_point = road.geometry().interpolate(i * subsections[1]).asPoint()
-                    #end_point = road.geometry().interpolate((i + 1) * subsections[1]).asPoint()
-                    #print("Start point:", start_point)
-                    #print("End point:", end_point)
-                    
-                    #segment = QgsFeature()
-                    #segment.setGeometry(QgsGeometry.fromPolylineXY([start_point, end_point]))
-                    #segmented_roads_provider.addFeatures([segment])
-
-
-                    #intersection["road_id"] = road.id()
-                    #intersection_layer.updateFeature(intersection)
-        
-        intersection_layer.updateExtents()
+        #leg_end_points_layer.updateExtents()
+        #leg_segments_layer.updateExtents()
         
 
         
-        project.addMapLayer(selected_features_layer)
-        project.addMapLayer(intersection_layer)
-        project.addMapLayer(segmented_roads_layer)
+        #project.addMapLayer(selected_features_layer)
+        #project.addMapLayer(intersection_layer)
+        #project.addMapLayer(segmented_roads_layer)
+        #project.addMapLayer(leg_end_points_layer)
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
