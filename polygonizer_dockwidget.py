@@ -75,6 +75,14 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         geometry.transform(transform)
         print(geometry.asJson())
 
+    def multiline_feature_to_linestring_geometry(self, feature):
+        multiline = feature.geometry().asMultiPolyline()
+        # Convert to LineString (it's up to you to not hand it a disjointed MultiLineString)
+        points = [point for sublist in multiline for point in sublist]
+        # Create a LineString from these points
+        linestring = QgsLineString(points)
+        return linestring
+
     def eventPushButtonDoSomethingOnClick(self):
         
 
@@ -182,11 +190,7 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             #print("End distance:", end_distance)
                             if start_distance > end_distance:
                                 start_distance, end_distance = end_distance, start_distance
-                            multiline = road.geometry().asMultiPolyline()
-                            # Convert to LineString (it's up to you to not hand it a disjointed MultiLineString)
-                            points = [point for sublist in multiline for point in sublist]
-                            # Create a LineString from these points
-                            linestring = QgsLineString(points)
+                            linestring = self.multiline_feature_to_linestring_geometry(road)
                             segment = linestring.curveSubstring(start_distance, end_distance)
                             segment_feature = QgsFeature()
                             segment_feature.setGeometry(QgsGeometry.fromPolyline(segment))
@@ -231,11 +235,7 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         right_leg_end_point_feature.setGeometry(QgsGeometry.fromPointXY(right_leg_end_point))
                         leg_end_points_provider.addFeature(right_leg_end_point_feature)
 
-                    multiline = road.geometry().asMultiPolyline()
-                    # Convert to LineString (it's up to you to not hand it a disjointed MultiLineString)
-                    points = [point for sublist in multiline for point in sublist]
-                    # Create a LineString from these points
-                    linestring = QgsLineString(points)
+                    linestring = self.multiline_feature_to_linestring_geometry(road)
 
                     left_leg  = linestring.curveSubstring(0, LEG_LENGTH)
                     right_leg = linestring.curveSubstring(linestring.length() - LEG_LENGTH, linestring.length())
@@ -294,11 +294,35 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         #leg_end_points_layer.updateExtents()
         #leg_segments_layer.updateExtents()
         
-        
         #project.addMapLayer(selected_features_layer)
         project.addMapLayer(intersection_layer)
         #project.addMapLayer(segmented_roads_layer)
         #project.addMapLayer(leg_end_points_layer)
+
+        for road in selected_features_layer.getFeatures():
+            print()
+            print("Road:", road.id(), "Length:", road.geometry().length())
+            
+            start_point_is_contained = False
+            end_point_is_contained = False
+            for feature in intersection_layer.getFeatures():
+                target_point_geometry = feature.geometry()
+                print("Type:", road.geometry().type())
+                print("Road geometry:",  road.geometry())
+                #start_point = target_point_geometry.startPoint()
+                #print(start_point)
+                
+                #if target_point_geometry.contains(road.geometry().startPoint()):
+                    #start_point_is_contained = True
+                #if target_point_geometry.contains(road.geometry().endPoint()):
+                    #end_point_is_contained = True
+
+
+            print("Start point is contained:", start_point_is_contained)
+            print("End point is contained:", end_point_is_contained)
+
+            # check each end for an intersection, if found 1, cul de sac, if found 2 an interconnect
+
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
