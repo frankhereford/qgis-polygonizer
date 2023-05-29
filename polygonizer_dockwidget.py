@@ -68,6 +68,13 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             actual_length = total_length / num_subsections
             return num_subsections, actual_length
 
+    def print_tx_geometry_as_geojson(self, geometry):
+        source_crs = QgsCoordinateReferenceSystem("EPSG:2277")
+        destination_crs = QgsCoordinateReferenceSystem("EPSG:4326")
+        transform = QgsCoordinateTransform(source_crs, destination_crs, QgsProject.instance())
+        geometry.transform(transform)
+        print(geometry.asJson())
+
     def eventPushButtonDoSomethingOnClick(self):
         project = QgsProject.instance()
 
@@ -143,10 +150,13 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         #leg_end_points_layer = QgsVectorLayer('Point?crs=EPSG:2277', 'Workspace: Leg Endpoints', 'memory')
         #leg_end_points_provider = leg_end_points_layer.dataProvider()
 
-
+        intersection_polygons_layer = QgsVectorLayer("Polygon?crs=EPSG:2277", f"Workspace: Intersection Polygons", "memory")
+        intersection_polygons_provider = intersection_polygons_layer.dataProvider()
 
         GOAL_SEGMENT_LENGTH = 100
-        GOAL_LEG_LENGTH = 150
+        GOAL_LEG_LENGTH = 500
+        BUFFER_LENGTH = 50
+        BUFFER_DETAIL = 20
 
         if False:
             for intersection in intersection_layer.getFeatures():
@@ -182,6 +192,7 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
 
         for intersection in intersection_layer.getFeatures():
+            print()
             print("Intersection:", intersection.id())
 
             # create a layer for the leg segments
@@ -189,6 +200,10 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             crs = QgsCoordinateReferenceSystem("EPSG:2277")
             leg_segments_layer.setCrs(crs)
             leg_segments_provider = leg_segments_layer.dataProvider()
+
+            leg_segments_buffer_layer = QgsVectorLayer("Polygon?crs=EPSG:2277", f"Workspace: Intersection {intersection.id()} Buffered Legs", "memory")
+            leg_segments_buffer_provider = leg_segments_buffer_layer.dataProvider()
+
 
             for road in selected_features_layer.getFeatures():
                 if intersection.geometry().intersects(road.geometry()):
@@ -224,14 +239,57 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                     left_leg_feature = QgsFeature()
                     left_leg_feature.setGeometry(QgsGeometry.fromPolyline(left_leg))
-                    leg_segments_provider.addFeatures([left_leg_feature])
 
                     right_leg_feature = QgsFeature()
                     right_leg_feature.setGeometry(QgsGeometry.fromPolyline(right_leg))
-                    leg_segments_provider.addFeatures([right_leg_feature])
+
+                    if intersection.geometry().intersects(left_leg_feature.geometry()):
+                        print("Intersection intersects left leg")
+                        leg_segments_provider.addFeatures([left_leg_feature])
+                    if intersection.geometry().intersects(right_leg_feature.geometry()):
+                        print("Intersection intersects right leg")
+                        leg_segments_provider.addFeatures([right_leg_feature])
+                    
+            for leg in leg_segments_layer.getFeatures():
+                #print(leg)
+
+                end_cap_style = Qgis.EndCapStyle(2) # flat
+                join_style = Qgis.JoinStyle(1) # miter
+                miter_limit = 2
+
+                buffer = leg.geometry().buffer(distance=BUFFER_LENGTH, segments=BUFFER_DETAIL, endCapStyle=end_cap_style, joinStyle=join_style, miterLimit=miter_limit)
+
+                #self.print_tx_geometry_as_geojson(buffer)
+
+                buffered_leg = QgsFeature()
+                buffered_leg.setGeometry(buffer)
+                leg_segments_buffer_provider.addFeature(buffered_leg)
+
+
+
+            intersection_buffer = intersection.geometry().buffer(distance=BUFFER_LENGTH, segments=BUFFER_DETAIL)
+            buffered_intersection = QgsFeature()
+            buffered_intersection.setGeometry(intersection_buffer)
+            leg_segments_buffer_provider.addFeature(buffered_intersection)
+            #self.print_tx_geometry_as_geojson(intersection_buffer)
+
+
+            features = leg_segments_buffer_layer.getFeatures()
+            geometries = [feature.geometry() for feature in features]
+            union_geometry = QgsGeometry.unaryUnion(geometries)
+            union_feature = QgsFeature()
+            union_feature.setGeometry(union_geometry)
+            #self.print_tx_geometry_as_geojson(union_geometry)
+            intersection_polygons_provider.addFeature(union_feature)
 
             leg_segments_layer.updateExtents()
-            project.addMapLayer(leg_segments_layer)
+            #project.addMapLayer(leg_segments_layer)
+
+            leg_segments_buffer_layer.updateExtents()
+            #project.addMapLayer(leg_segments_buffer_layer)
+
+            intersection_polygons_layer.updateExtents()
+            project.addMapLayer(intersection_polygons_layer)
 
         #leg_end_points_layer.updateExtents()
         #leg_segments_layer.updateExtents()
