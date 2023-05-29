@@ -307,16 +307,19 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             end_point_is_contained = False
             for feature in intersection_layer.getFeatures():
                 target_point_geometry = feature.geometry()
-                print("Type:", road.geometry().type())
-                print("Road geometry:",  road.geometry())
-                #start_point = target_point_geometry.startPoint()
-                #print(start_point)
-                
-                #if target_point_geometry.contains(road.geometry().startPoint()):
-                    #start_point_is_contained = True
-                #if target_point_geometry.contains(road.geometry().endPoint()):
-                    #end_point_is_contained = True
+                #print("Road geometry:",  road.geometry())
 
+                linestring = self.multiline_feature_to_linestring_geometry(road)
+                start_point = linestring.startPoint()
+                end_point = linestring.endPoint()
+                
+                print("Start point:", start_point)
+                print("End point:", end_point)
+                
+                if target_point_geometry.intersects(QgsGeometry.fromWkt(start_point.asWkt())):
+                    start_point_is_contained = True
+                if target_point_geometry.intersects(QgsGeometry.fromWkt(end_point.asWkt())):
+                    end_point_is_contained = True
 
             print("Start point is contained:", start_point_is_contained)
             print("End point is contained:", end_point_is_contained)
