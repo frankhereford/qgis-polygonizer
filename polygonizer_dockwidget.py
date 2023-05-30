@@ -23,11 +23,12 @@
 """
 
 import os
+import json
 #import sys
 #sys.path.insert(0, '/Users/frank/Library/Application Support/QGIS/QGIS3/profiles/default/python/plugins/polygonizer/')
 
 from qgis.PyQt import QtGui, QtWidgets, uic
-from qgis.PyQt.QtCore import pyqtSignal
+from qgis.PyQt.QtCore import pyqtSignal, QVariant
 
 #from qgis.core import (
     #QgsProject,
@@ -84,10 +85,7 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         return linestring
 
     def eventPushButtonDoSomethingOnClick(self):
-        
-
         project = QgsProject.instance()
-
 
         layers = project.mapLayers()
         #print("Layers:")
@@ -119,6 +117,11 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         intersection_layer = QgsVectorLayer('Point?crs=EPSG:2277', 'Workspace: Intersection Points', 'memory')
         intersection_provider = intersection_layer.dataProvider()
 
+        
+        new_field = QgsField('legs', QVariant.String)
+        intersection_provider.addAttributes([new_field])
+        intersection_layer.updateFields()
+
         # iterate over features, find intersecting features, so we can create a point at each intersection
         features = selected_features_layer.getFeatures()
         list_of_features = list(features)
@@ -148,7 +151,6 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         with edit(intersection_layer):
             intersection_layer.deleteFeatures(delete_ids)
-
 
         intersection_layer.updateExtents()
 
@@ -210,10 +212,11 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             leg_segments_buffer_layer = QgsVectorLayer("Polygon?crs=EPSG:2277", f"Workspace: Intersection {intersection.id()} Buffered Legs", "memory")
             leg_segments_buffer_provider = leg_segments_buffer_layer.dataProvider()
 
+            legs = {}
 
             for road in selected_features_layer.getFeatures():
                 if intersection.geometry().intersects(road.geometry()):
-                    print(f"Intersection {intersection.id()} intersects road {road.id()} of length {road.geometry().length()} feet.")
+                    #print(f"Intersection {intersection.id()} intersects road {road.id()} of length {road.geometry().length()} feet.")
                     LEG_LENGTH = GOAL_LEG_LENGTH
                     # we have a road that is a leg, let's compute the length of the leg
                     # FIXME we need some snapping flexibility, because this can leave slivers
@@ -221,7 +224,7 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     if road.geometry().length() < LEG_LENGTH * 2:
                         LEG_LENGTH = road.geometry().length() / 2
 
-                    print("Leg length:", LEG_LENGTH)
+                    #print("Leg length:", LEG_LENGTH)
 
                     if False:
                         left_leg_end_point = road.geometry().interpolate(LEG_LENGTH).asPoint()
@@ -247,11 +250,30 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     right_leg_feature.setGeometry(QgsGeometry.fromPolyline(right_leg))
 
                     if intersection.geometry().intersects(left_leg_feature.geometry()):
-                        print("Intersection intersects left leg")
+                        #print("Intersection intersects left leg")
                         leg_segments_provider.addFeatures([left_leg_feature])
+                        legs[road.id()] = left_leg_feature.geometry().length()
                     if intersection.geometry().intersects(right_leg_feature.geometry()):
-                        print("Intersection intersects right leg")
+                        #print("Intersection intersects right leg")
                         leg_segments_provider.addFeatures([right_leg_feature])
+                        legs[road.id()] = right_leg_feature.geometry().length()
+                    
+            # Start editing
+            intersection_layer.startEditing()
+
+            print("Intersection: ", intersection)
+            # Set the feature's attribute
+            intersection['legs'] = json.dumps(legs)
+            print("Legs: ", intersection['legs'])
+
+            # Update the feature in the layer
+            #intersection_provider.updateFeature(intersection)
+            intersection_layer.changeAttributeValue(intersection.id(), 0, intersection['legs'])
+
+            #intersection.
+
+            # Commit changes
+            intersection_layer.commitChanges()
                     
             for leg in leg_segments_layer.getFeatures():
                 #print(leg)
@@ -294,7 +316,7 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         #leg_end_points_layer.updateExtents()
         #leg_segments_layer.updateExtents()
         
-        #project.addMapLayer(selected_features_layer)
+        project.addMapLayer(selected_features_layer)
         project.addMapLayer(intersection_layer)
         #project.addMapLayer(segmented_roads_layer)
         #project.addMapLayer(leg_end_points_layer)
@@ -313,8 +335,8 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 start_point = linestring.startPoint()
                 end_point = linestring.endPoint()
                 
-                print("Start point:", start_point)
-                print("End point:", end_point)
+                #print("Start point:", start_point)
+                #print("End point:", end_point)
                 
                 if target_point_geometry.intersects(QgsGeometry.fromWkt(start_point.asWkt())):
                     start_point_is_contained = True
@@ -323,6 +345,15 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
             print("Start point is contained:", start_point_is_contained)
             print("End point is contained:", end_point_is_contained)
+
+            if start_point_is_contained and end_point_is_contained:
+                pass
+            elif start_point_is_contained and not end_point_is_contained:
+                pass
+            elif not start_point_is_contained and end_point_is_contained:
+                pass
+            else: # neither start nor end point is contained 🔥
+                pass
 
             # check each end for an intersection, if found 1, cul de sac, if found 2 an interconnect
 
