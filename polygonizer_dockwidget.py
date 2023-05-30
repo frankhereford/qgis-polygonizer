@@ -165,7 +165,7 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         intersection_polygons_provider = intersection_polygons_layer.dataProvider()
 
         interconnect_polygons_layer = QgsVectorLayer("Polygon?crs=EPSG:2277", f"Workspace: Interconnect Polygons", "memory")
-        interconnect_polygons_provider = intersection_polygons_layer.dataProvider()
+        interconnect_polygons_provider = interconnect_polygons_layer.dataProvider()
 
         GOAL_SEGMENT_LENGTH = self.goalSegmentLength.value()
         GOAL_LEG_LENGTH = self.goalLegLength.value()
