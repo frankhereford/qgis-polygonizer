@@ -331,12 +331,16 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
             interconnect_length = road.geometry().length() - start_point_leg_length - end_point_leg_length
             print("Interconnect length:", interconnect_length)
-            if interconnect_length > 0:
+            if interconnect_length > 0.0000001:
                 subsections = self.compute_subsections(interconnect_length, GOAL_SEGMENT_LENGTH)
                 print("Subsections:", subsections)
             
 
                 for i in range(subsections[0]):
+                    #print("Start point leg length:", start_point_leg_length)
+                    #print("I: ", i)
+                    #print("Subsection length:", subsections[1])
+
                     start_point = road.geometry().interpolate(start_point_leg_length + (i * subsections[1])).asPoint()
                     end_point = road.geometry().interpolate(start_point_leg_length + ((i + 1) * subsections[1])).asPoint()
                     #print("Start point:", start_point)
@@ -354,6 +358,20 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     segmented_roads_provider.addFeatures([segment_feature])
 
                     buffer = segment_feature.geometry().buffer(distance=BUFFER_LENGTH, segments=BUFFER_DETAIL, endCapStyle=end_cap_style, joinStyle=join_style, miterLimit=miter_limit)
+
+                    if not start_point_intersection_id and i == 0:
+                        buffered_end = QgsGeometry.fromWkt(start_point.asWkt()).buffer(distance=BUFFER_LENGTH, segments=BUFFER_DETAIL)
+                        buffer = buffer.combine(buffered_end)
+                        #buffered_feature = QgsFeature()
+                        #buffered_feature.setGeometry(buffered_endpoint)
+                        #interconnect_polygons_provider.addFeature(buffered_feature)
+                    if not end_point_intersection_id and i == subsections[0] - 1:
+                        buffered_end = QgsGeometry.fromWkt(end_point.asWkt()).buffer(distance=BUFFER_LENGTH, segments=BUFFER_DETAIL)
+                        buffer = buffer.combine(buffered_end)
+                        #buffered_feature = QgsFeature()
+                        #buffered_feature.setGeometry(buffered_endpoint)
+                        #interconnect_polygons_provider.addFeature(buffered_feature)
+
                     buffered_feature = QgsFeature()
                     buffered_feature.setGeometry(buffer)
                     interconnect_polygons_provider.addFeature(buffered_feature)
