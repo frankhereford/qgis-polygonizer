@@ -104,19 +104,18 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         active_layer = iface.activeLayer()
         selected_features = active_layer.selectedFeatures()
-        for feature in selected_features:
+        for intersection in selected_features:
             #print("Feature ID:", type(feature))
             #print("Feature ID:", feature.id())
             #print("Feature attributes:", feature.attributes())
             #print("Feature geometry:", feature.geometry().asWkt()) 
-            selected_features_provider.addFeatures([feature])
+            selected_features_provider.addFeatures([intersection])
             #print()
 
         selected_features_layer.updateExtents()
 
         intersection_layer = QgsVectorLayer('Point?crs=EPSG:2277', 'Workspace: Intersection Points', 'memory')
         intersection_provider = intersection_layer.dataProvider()
-
         
         new_field = QgsField('legs', QVariant.String)
         intersection_provider.addAttributes([new_field])
@@ -139,14 +138,14 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # Delete duplicate features, so we have a single intersection point for each intersection
         index = QgsSpatialIndex()
         delete_ids = []
-        for feature in intersection_layer.getFeatures():
+        for intersection in intersection_layer.getFeatures():
             # If the feature's geometry is already in the index, then it's a duplicate
-            if list(index.intersects(feature.geometry().boundingBox())):
+            if list(index.intersects(intersection.geometry().boundingBox())):
                 # Store the feature's ID in our list of features to delete
-                delete_ids.append(feature.id())
+                delete_ids.append(intersection.id())
             else:
                 # If it's not in the index, add it now
-                index.addFeature(feature)
+                index.addFeature(intersection)
         #print("Delete IDs:", delete_ids)
 
         with edit(intersection_layer):
@@ -164,6 +163,9 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         intersection_polygons_layer = QgsVectorLayer("Polygon?crs=EPSG:2277", f"Workspace: Intersection Polygons", "memory")
         intersection_polygons_provider = intersection_polygons_layer.dataProvider()
+
+        interconnect_polygons_layer = QgsVectorLayer("Polygon?crs=EPSG:2277", f"Workspace: Interconnect Polygons", "memory")
+        interconnect_polygons_provider = intersection_polygons_layer.dataProvider()
 
         GOAL_SEGMENT_LENGTH = self.goalSegmentLength.value()
         GOAL_LEG_LENGTH = self.goalLegLength.value()
@@ -324,36 +326,99 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         for road in selected_features_layer.getFeatures():
             print()
             print("Road:", road.id(), "Length:", road.geometry().length())
+
+            linestring = self.multiline_feature_to_linestring_geometry(road)
+            start_point = QgsGeometry.fromWkt(linestring.startPoint().asWkt())
+            end_point = QgsGeometry.fromWkt(linestring.endPoint().asWkt())
             
-            start_point_is_contained = False
-            end_point_is_contained = False
-            for feature in intersection_layer.getFeatures():
-                target_point_geometry = feature.geometry()
+            start_point_intersection_id = None
+            end_point_intersection_id = None
+            start_point_leg_length = None
+            end_point_leg_length = None
+
+            for intersection in intersection_layer.getFeatures():
+                intersection_legs = json.loads(intersection["legs"])
+                # print(f"Intersection {intersection.id()} legs:", intersection_legs)
+                intersection_geometry = intersection.geometry()
+                #print("Intersection Geometry:", intersection_geometry)
+                #print("Start point:", start_point)
+                if intersection_geometry.intersects(start_point):
+                    start_point_intersection_id = intersection.id()
+                    start_point_leg_length = intersection_legs[str(road.id())]
+                if intersection_geometry.intersects(end_point):
+                    end_point_intersection_id = intersection.id()
+                    end_point_leg_length = intersection_legs[str(road.id())]
+
+            start_point_leg_length = 0.0 if start_point_leg_length is None else start_point_leg_length
+            end_point_leg_length = 0.0 if end_point_leg_length is None else end_point_leg_length
+
+            print("Start point intersection id:", start_point_intersection_id)
+            print("End point intersection id:", end_point_intersection_id)
+            print("Start point leg length:", start_point_leg_length)
+            print("End point leg length:", end_point_leg_length)
+
+            interconnect_length = road.geometry().length() - start_point_leg_length - end_point_leg_length
+            print("Interconnect length:", interconnect_length)
+            if interconnect_length > 0:
+                subsections = self.compute_subsections(interconnect_length, GOAL_SEGMENT_LENGTH)
+                print("Subsections:", subsections)
+            
+
+                for i in range(subsections[0]):
+                    start_point = road.geometry().interpolate(start_point_leg_length + (i * subsections[1])).asPoint()
+                    end_point = road.geometry().interpolate(start_point_leg_length + ((i + 1) * subsections[1])).asPoint()
+                    #print("Start point:", start_point)
+                    #print("End point:", end_point)
+                    start_distance = road.geometry().lineLocatePoint(QgsGeometry.fromPointXY(start_point))
+                    end_distance = road.geometry().lineLocatePoint(QgsGeometry.fromPointXY(end_point))
+                    #print("Start distance:", start_distance)
+                    #print("End distance:", end_distance)
+                    if start_distance > end_distance:
+                        start_distance, end_distance = end_distance, start_distance
+                    linestring = self.multiline_feature_to_linestring_geometry(road)
+                    segment = linestring.curveSubstring(start_distance, end_distance)
+                    segment_feature = QgsFeature()
+                    segment_feature.setGeometry(QgsGeometry.fromPolyline(segment))
+                    segmented_roads_provider.addFeatures([segment_feature])
+
+                    buffer = segment_feature.geometry().buffer(distance=BUFFER_LENGTH, segments=BUFFER_DETAIL, endCapStyle=end_cap_style, joinStyle=join_style, miterLimit=miter_limit)
+                    buffered_feature = QgsFeature()
+                    buffered_feature.setGeometry(buffer)
+                    interconnect_polygons_provider.addFeature(buffered_feature)
+
+
+        segmented_roads_layer.updateExtents()
+        project.addMapLayer(segmented_roads_layer)
+        interconnect_polygons_layer.updateExtents()
+        project.addMapLayer(interconnect_polygons_layer)
+            
+            # start_point_is_contained = False
+            # end_point_is_contained = False
+            # for intersection in intersection_layer.getFeatures():
+                # target_point_geometry = intersection.geometry()
+                # print("Intersection:", intersection["legs"])
                 #print("Road geometry:",  road.geometry())
 
-                linestring = self.multiline_feature_to_linestring_geometry(road)
-                start_point = linestring.startPoint()
-                end_point = linestring.endPoint()
                 
                 #print("Start point:", start_point)
                 #print("End point:", end_point)
                 
-                if target_point_geometry.intersects(QgsGeometry.fromWkt(start_point.asWkt())):
-                    start_point_is_contained = True
-                if target_point_geometry.intersects(QgsGeometry.fromWkt(end_point.asWkt())):
-                    end_point_is_contained = True
+                # if target_point_geometry.intersects(QgsGeometry.fromWkt(start_point.asWkt())):
+                    # start_point_is_contained = True
+                # if target_point_geometry.intersects(QgsGeometry.fromWkt(end_point.asWkt())):
+                    # end_point_is_contained = True
 
-            print("Start point is contained:", start_point_is_contained)
-            print("End point is contained:", end_point_is_contained)
+            # print("Start point is contained:", start_point_is_contained)
+            # print("End point is contained:", end_point_is_contained)
 
-            if start_point_is_contained and end_point_is_contained:
-                pass
-            elif start_point_is_contained and not end_point_is_contained:
-                pass
-            elif not start_point_is_contained and end_point_is_contained:
-                pass
-            else: # neither start nor end point is contained 🔥
-                pass
+            # if start_point_is_contained and end_point_is_contained:
+                # pass
+            # elif start_point_is_contained and not end_point_is_contained:
+                # pass
+            # elif not start_point_is_contained and end_point_is_contained:
+                # pass
+            # else: # neither start nor end point is contained 🔥
+                # pass
 
             # check each end for an intersection, if found 1, cul de sac, if found 2 an interconnect
 
