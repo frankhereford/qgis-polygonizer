@@ -172,35 +172,6 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         BUFFER_LENGTH = self.polygonWidth.value()
         BUFFER_DETAIL = 20
 
-        if False:
-            for intersection in intersection_layer.getFeatures():
-                print("Intersection:", intersection.id())
-                for road in selected_features_layer.getFeatures():
-                    if intersection.geometry().intersects(road.geometry()):
-                        #print(f"Intersection {intersection.id()} intersects road {road.id()} of length {road.geometry().length()} feet.")
-
-                        # this makes plain subsection features
-                        subsections = self.compute_subsections(road.geometry().length(), GOAL_SEGMENT_LENGTH)
-                        #print("Subsections: (count, practical_length)", subsections)
-                        # this makes a feature layer of equally length segments.
-                        for i in range(subsections[0]):
-                            start_point = road.geometry().interpolate(i * subsections[1]).asPoint()
-                            end_point = road.geometry().interpolate((i + 1) * subsections[1]).asPoint()
-                            #print("Start point:", start_point)
-                            #print("End point:", end_point)
-                            start_distance = road.geometry().lineLocatePoint(QgsGeometry.fromPointXY(start_point))
-                            end_distance = road.geometry().lineLocatePoint(QgsGeometry.fromPointXY(end_point))
-                            #print("Start distance:", start_distance)
-                            #print("End distance:", end_distance)
-                            if start_distance > end_distance:
-                                start_distance, end_distance = end_distance, start_distance
-                            linestring = self.multiline_feature_to_linestring_geometry(road)
-                            segment = linestring.curveSubstring(start_distance, end_distance)
-                            segment_feature = QgsFeature()
-                            segment_feature.setGeometry(QgsGeometry.fromPolyline(segment))
-                            segmented_roads_provider.addFeatures([segment_feature])
-
-
         for intersection in intersection_layer.getFeatures():
             print()
             print("Intersection:", intersection.id())
@@ -385,7 +356,6 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     buffered_feature = QgsFeature()
                     buffered_feature.setGeometry(buffer)
                     interconnect_polygons_provider.addFeature(buffered_feature)
-
 
         segmented_roads_layer.updateExtents()
         project.addMapLayer(segmented_roads_layer)
