@@ -172,6 +172,10 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         BUFFER_LENGTH = self.polygonWidth.value()
         BUFFER_DETAIL = 20
 
+        end_cap_style = Qgis.EndCapStyle(2) # flat
+        join_style = Qgis.JoinStyle(1) # miter
+        miter_limit = 2
+
         for intersection in intersection_layer.getFeatures():
             print()
             print("Intersection:", intersection.id())
@@ -251,9 +255,6 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             for leg in leg_segments_layer.getFeatures():
                 #print(leg)
 
-                end_cap_style = Qgis.EndCapStyle(2) # flat
-                join_style = Qgis.JoinStyle(1) # miter
-                miter_limit = 2
 
                 buffer = leg.geometry().buffer(distance=BUFFER_LENGTH, segments=BUFFER_DETAIL, endCapStyle=end_cap_style, joinStyle=join_style, miterLimit=miter_limit)
 
