@@ -109,7 +109,7 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             #print("Feature ID:", feature.id())
             #print("Feature attributes:", feature.attributes())
             #print("Feature geometry:", feature.geometry().asWkt()) 
-            selected_features_provider.addFeatures([intersection])
+            selected_features_provider.addFeature(intersection)
             #print()
 
         selected_features_layer.updateExtents()
@@ -126,14 +126,20 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         list_of_features = list(features)
         for i in range(len(list_of_features)):
             for j in range(i+1, len(list_of_features)):
-                #print(f"Comparing {list_of_features[i].id()} and {list_of_features[j].id()}")
+                # print()
+                # print(f"Comparing {list_of_features[i].id()} and {list_of_features[j].id()}")
+                # print(f"    Geometry {list_of_features[i].id()}:", list_of_features[i].geometry().asWkt())
+                # print(f"    Geometry {list_of_features[j].id()}:", list_of_features[j].geometry().asWkt())
                 intersection = list_of_features[i].geometry().intersection(list_of_features[j].geometry())
-                #print("Intersection:", intersection)
+                # print("Intersection:", intersection)
                 intersection_feature = QgsFeature()
                 intersection_feature.setGeometry(intersection)
                 intersection_provider.addFeature(intersection_feature)
         
         intersection_layer.updateExtents()
+        
+        # for intersection in intersection_layer.getFeatures():
+            # print("Intersection: ", intersection.id(), intersection.geometry().asWkt())
         
         # Delete duplicate features, so we have a single intersection point for each intersection
         index = QgsSpatialIndex()
