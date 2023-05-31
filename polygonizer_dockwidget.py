@@ -335,20 +335,36 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 subsections = self.compute_subsections(interconnect_length, GOAL_SEGMENT_LENGTH)
                 print("Subsections:", subsections)
             
+                road_geometry = road.geometry() 
+                print("Road geometry:", self.print_tx_geometry_as_geojson(road_geometry))
 
                 for i in range(subsections[0]):
-                    #print("Start point leg length:", start_point_leg_length)
-                    #print("I: ", i)
-                    #print("Subsection length:", subsections[1])
+                    # print()
+                    # print("    Start point leg length:", start_point_leg_length)
+                    # print("    I:", i)
+                    # print("    Subsection length:", subsections[1])
+                    # distance = start_point_leg_length + ((i + 1) * subsections[1])
+                    # print("    Distance:", distance)
+
+                    #road_geometry = road.geometry() 
+                    #print("Road geometry:", self.print_tx_geometry_as_geojson(road_geometry))
+
+                    #interpolation = road_geometry.interpolate(distance)
+                    #print("    Interpolation:", interpolation)
+
 
                     start_point = road.geometry().interpolate(start_point_leg_length + (i * subsections[1])).asPoint()
-                    end_point = road.geometry().interpolate(start_point_leg_length + ((i + 1) * subsections[1])).asPoint()
-                    #print("Start point:", start_point)
-                    #print("End point:", end_point)
+                    try:
+                        end_point = road.geometry().interpolate(start_point_leg_length + ((i + 1) * subsections[1])).asPoint()
+                    except:
+                        end_point = road.geometry().interpolate(start_point_leg_length + ((i + 1) * subsections[1]) - 0.0000001).asPoint()
+                        
+                    # print("    Start point:", start_point)
+                    # print("    End point:", end_point)
                     start_distance = road.geometry().lineLocatePoint(QgsGeometry.fromPointXY(start_point))
                     end_distance = road.geometry().lineLocatePoint(QgsGeometry.fromPointXY(end_point))
-                    #print("Start distance:", start_distance)
-                    #print("End distance:", end_distance)
+                    # print("    Start distance:", start_distance)
+                    # print("    End distance:", end_distance)
                     if start_distance > end_distance:
                         start_distance, end_distance = end_distance, start_distance
                     linestring = self.multiline_feature_to_linestring_geometry(road)
