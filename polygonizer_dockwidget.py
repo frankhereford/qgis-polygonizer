@@ -84,6 +84,31 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         linestring = QgsLineString(points)
         return linestring
 
+    def add_layer_to_output_group(self, added_layer, output_group_name, layer_root, visible=True):
+        project = QgsProject.instance()
+        #added_layer = project.addMapLayer(layer)
+        layer_to_move = layer_root.findLayer(added_layer.id())
+        if layer_to_move is not None:
+            # Clone the layer
+            clone = layer_to_move.clone()
+
+            # Find the group
+            group = layer_root.findGroup(output_group_name)
+
+            # If the group was found, add the layer to it
+            if group is not None:
+                # Add the cloned layer to the group
+                group.insertChildNode(-1, clone)
+                if visible:
+                    clone.setItemVisibilityChecked(True)
+                else:
+                    clone.setItemVisibilityChecked(False)
+
+                # Remove the original layer from its parent
+                parent = layer_to_move.parent()
+                parent.removeChildNode(layer_to_move)
+
+
     def eventPushButtonDoSomethingOnClick(self):
         project = QgsProject.instance()
 
@@ -95,6 +120,21 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 #print("Layer", layer.id(), "is a", layer.type())
                 project.removeMapLayer(layer.id())
         #print()
+
+        output_group_name = 'Polygonizer Output'
+        layer_root = project.layerTreeRoot()
+        group = layer_root.findGroup(output_group_name)
+        # If the group was found, remove it
+        if group is not None:
+            parent = group.parent()
+            parent.removeChildNode(group)
+        output_group = layer_root.addGroup(output_group_name)
+        clone = output_group.clone()
+        layer_root.insertChildNode(0, clone)
+        parent = output_group.parent()
+        parent.removeChildNode(output_group)
+
+
 
         # create layer
         selected_features_layer = QgsVectorLayer("LineString", "Workspace: Selected Features", "memory")
@@ -290,14 +330,32 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             leg_segments_buffer_layer.updateExtents()
             #project.addMapLayer(leg_segments_buffer_layer)
 
-            intersection_polygons_layer.updateExtents()
-            project.addMapLayer(intersection_polygons_layer)
+            #added_layer = project.addMapLayer(intersection_polygons_layer)
+            #self.add_layer_to_output_group(added_layer, output_group_name, layer_root)
+            
+            #self.add_layer_to_output_group(intersection_polygons_layer, output_group_name, layer_root)
+
+        intersection_polygons_layer.updateExtents()
+        added_layer = project.addMapLayer(intersection_polygons_layer)
+        self.add_layer_to_output_group(added_layer, output_group_name, layer_root, visible=True)
 
         #leg_end_points_layer.updateExtents()
         #leg_segments_layer.updateExtents()
+
+        selected_features_layer.updateExtents()
+        intersection_layer.updateExtents()
+
+        added_layer = project.addMapLayer(selected_features_layer)
+        self.add_layer_to_output_group(added_layer, output_group_name, layer_root, visible=False)
+
+        added_layer = project.addMapLayer(intersection_layer)
+        self.add_layer_to_output_group(added_layer, output_group_name, layer_root, visible=False)
         
-        project.addMapLayer(selected_features_layer)
-        project.addMapLayer(intersection_layer)
+        #project.addMapLayer(selected_features_layer)
+        #project.addMapLayer(intersection_layer)
+
+
+
         #project.addMapLayer(segmented_roads_layer)
         #project.addMapLayer(leg_end_points_layer)
 
@@ -399,9 +457,14 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     interconnect_polygons_provider.addFeature(buffered_feature)
 
         segmented_roads_layer.updateExtents()
-        project.addMapLayer(segmented_roads_layer)
         interconnect_polygons_layer.updateExtents()
-        project.addMapLayer(interconnect_polygons_layer)
+        interconnect_added_layer = project.addMapLayer(interconnect_polygons_layer)
+        #self.add_layer_to_output_group(segmented_roads_layer, output_group_name, layer_root)
+        self.add_layer_to_output_group(interconnect_added_layer, output_group_name, layer_root)
+
+
+
+        #output_group.addLayer(interconnect_polygons_layer)
             
             # start_point_is_contained = False
             # end_point_is_contained = False
