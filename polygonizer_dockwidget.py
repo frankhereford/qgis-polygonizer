@@ -2,10 +2,13 @@
 """
 /***************************************************************************
  *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
+ *  This software is released under the Unlicense. You may use it for      *
+ *  anything you wish. This software is provided "AS-IS", and without      *
+ *  warranty of any kind, express or implied.                              *
+ *                                                                         *
+ *  Please refer to the LICENSE file for more information.                 *
+ *                                                                         *
+ *  Additionally, please refer to <https://unlicense.org>                  *
  *                                                                         *
  ***************************************************************************/
 """
@@ -89,7 +92,7 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 parent = layer_to_move.parent()
                 parent.removeChildNode(layer_to_move)
 
-    def eventPushButtonDoSomethingOnClick(self):
+    def eventPushButtonRunPolygonizerOnClick(self):
         project = QgsProject.instance()
 
         # clean up previous executions workspace layers
