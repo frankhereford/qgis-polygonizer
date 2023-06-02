@@ -368,10 +368,11 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             interconnect_length = (
                 road.geometry().length() - start_point_leg_length - end_point_leg_length
             )
-            # GIS, floats, the age old problem. Define a cut off for what we believe is zero
+            # GIS & floats: the age old problem. Define a cut off for what we believe is zero.
+            # This is about 2500 hydrogen atoms long. This is very zero in the scope of a road.
             if (
                 interconnect_length > 0.0000001
-            ):  # this is about 2500 hydrogen atoms long; this is very zero in the scope of a road
+            ):  
                 # calculate the number of subsections we'll need to create
                 subsections = self.compute_subsections(
                     interconnect_length, GOAL_SEGMENT_LENGTH
