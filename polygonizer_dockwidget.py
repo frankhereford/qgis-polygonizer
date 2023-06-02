@@ -107,7 +107,6 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 parent = layer_to_move.parent()
                 parent.removeChildNode(layer_to_move)
 
-
     def eventPushButtonDoSomethingOnClick(self):
         project = QgsProject.instance()
 
