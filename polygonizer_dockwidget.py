@@ -418,7 +418,7 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     end_distance = road.geometry().lineLocatePoint(
                         QgsGeometry.fromPointXY(end_point)
                     )
-                    # make our math is sane
+                    # make sure our math is sane
                     if start_distance > end_distance:
                         start_distance, end_distance = end_distance, start_distance
                     # get raw geometry to carve out the subsection of road linestring
