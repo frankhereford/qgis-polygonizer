@@ -5,12 +5,12 @@
 [general]
 name=COA TPW Polygonizer
 qgisMinimumVersion=3.0
-description=A plugin to help make Vision Zero Polygons from street center lines
+description=This plugin can be used to create polygons that track the shape of a line network, including the proper handling of intersections with common nodes of the line segments.
 version=0.1
 author=DTS
 email=frank.hereford@austintexas.gov
 
-about=This is a tool to help create Vision Zero polygons from line networks depicting road center lines.
+about=The Vision Zero team of the City of Austin's Transportation and Public works department uses polygons created from the street network to aggregate vehicle crashes to allow for comparisons of different parts of the City's road network. This plugin is intended to facilitate the creation and maintenance of this geometry as the city's expands its road network.
 
 tracker=https://github.com/frankhereford/qgis-polygonizer/issues
 repository=https://github.com/frankhereford/qgis-polygonizer
