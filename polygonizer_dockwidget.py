@@ -37,7 +37,7 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # http://doc.qt.io/qt-5/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
-        self.printHelloWorld.clicked.connect(self.eventPushButtonDoSomethingOnClick)
+        self.doPolygonizerButton.clicked.connect(self.eventPushButtonRunPolygonizerOnClick)
 
     def compute_subsections(self, total_length, goal_length):
         if goal_length >= total_length:
