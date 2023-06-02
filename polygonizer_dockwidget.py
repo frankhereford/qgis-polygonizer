@@ -338,7 +338,7 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             start_point_leg_length = 0.0 if start_point_leg_length is None else start_point_leg_length
             end_point_leg_length = 0.0 if end_point_leg_length is None else end_point_leg_length
 
-            # final compute the total length of the non-intersectional interconnect portion of the road
+            # finally compute the total length of the non-intersectional interconnect portion of the road
             interconnect_length = road.geometry().length() - start_point_leg_length - end_point_leg_length
             # GIS, floats, the age old problem. Define a cut off for what we believe is zero
             if interconnect_length > 0.0000001: # this is about 2500 hydrogen atoms long; this is very zero in the scope of a road
