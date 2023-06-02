@@ -238,7 +238,6 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     LEG_LENGTH = GOAL_LEG_LENGTH
                     # we have a road that is a leg, let's compute the length of the leg
                     # FIXME we need some snapping flexibility, because this can leave slivers
-                    # FIXME we need to detect cul-de-sacs and extend the leg the length of them, possibly splitting it up
                     if road.geometry().length() < LEG_LENGTH * 2:
                         LEG_LENGTH = road.geometry().length() / 2
 
