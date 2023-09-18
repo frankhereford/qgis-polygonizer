@@ -461,6 +461,31 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         segmented_roads_layer.updateExtents()
         interconnect_polygons_layer.updateExtents()
 
+        merged_layer = QgsVectorLayer("Polygon?crs=epsg:2277", "Workspace: Pre-clip Polygons", "memory")
+
+        # Get the data provider to edit the layer
+        provider = merged_layer.dataProvider()
+
+        # Initialize a list to hold new features
+        new_features = []
+
+        for feature in intersection_polygons_layer.getFeatures():
+            new_features.append(feature)
+
+        for feature in interconnect_polygons_layer.getFeatures():
+            new_features.append(feature)
+
+        # Add new features to the merged layer
+        provider.addFeatures(new_features)
+
+        # Add the merged layer to the map
+        QgsProject.instance().addMapLayer(merged_layer)
+
+        
+        
+
+
+
         # add our new layer with our intersectional polygons to the output group
         interconnect_added_layer = project.addMapLayer(interconnect_polygons_layer)
         self.add_layer_to_output_group(
