@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>855</width>
-    <height>215</height>
+    <width>861</width>
+    <height>244</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,6 +15,13 @@
   </property>
   <widget class="QWidget" name="dockWidgetContents">
    <layout class="QGridLayout" name="gridLayout">
+    <item row="1" column="0">
+     <widget class="QPushButton" name="doPolygonizerButton">
+      <property name="text">
+       <string>Polygonize Selection</string>
+      </property>
+     </widget>
+    </item>
     <item row="0" column="0">
      <layout class="QFormLayout" name="formLayout">
       <property name="fieldGrowthPolicy">
@@ -140,14 +147,41 @@
         </item>
        </layout>
       </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="maxSnapDistanceLabel">
+        <property name="text">
+         <string>Maximum Snap Distance</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <layout class="QHBoxLayout" name="maxSnapDistanceHorizontalLayout">
+        <item>
+         <widget class="QSpinBox" name="maxSnapDistanceSpinbox">
+          <property name="maximum">
+           <number>150</number>
+          </property>
+          <property name="value">
+           <number>30</number>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSlider" name="maxSnapDistanceSlider">
+          <property name="maximum">
+           <number>150</number>
+          </property>
+          <property name="value">
+           <number>30</number>
+          </property>
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
      </layout>
-    </item>
-    <item row="1" column="0">
-     <widget class="QPushButton" name="doPolygonizerButton">
-      <property name="text">
-       <string>Polygonize Selection</string>
-      </property>
-     </widget>
     </item>
    </layout>
   </widget>
