@@ -44,10 +44,29 @@
       <item row="0" column="1">
        <layout class="QHBoxLayout" name="idealLegLengthHorizontalLayout">
         <item>
-         <widget class="QSpinBox" name="idealLegLengthSpinbox"/>
+         <widget class="QSpinBox" name="idealLegLengthSpinbox">
+          <property name="minimum">
+           <number>25</number>
+          </property>
+          <property name="maximum">
+           <number>300</number>
+          </property>
+          <property name="value">
+           <number>50</number>
+          </property>
+         </widget>
         </item>
         <item>
          <widget class="QSlider" name="idealLegLengthSlider">
+          <property name="minimum">
+           <number>25</number>
+          </property>
+          <property name="maximum">
+           <number>300</number>
+          </property>
+          <property name="value">
+           <number>50</number>
+          </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -58,10 +77,29 @@
       <item row="1" column="1">
        <layout class="QHBoxLayout" name="idealSegmentLengthHorizontalLayout">
         <item>
-         <widget class="QSpinBox" name="idealSegmentLengthSpinbox"/>
+         <widget class="QSpinBox" name="idealSegmentLengthSpinbox">
+          <property name="minimum">
+           <number>50</number>
+          </property>
+          <property name="maximum">
+           <number>250</number>
+          </property>
+          <property name="value">
+           <number>150</number>
+          </property>
+         </widget>
         </item>
         <item>
          <widget class="QSlider" name="idealSegmentLengthSlider">
+          <property name="minimum">
+           <number>50</number>
+          </property>
+          <property name="maximum">
+           <number>250</number>
+          </property>
+          <property name="value">
+           <number>150</number>
+          </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -72,10 +110,29 @@
       <item row="2" column="1">
        <layout class="QHBoxLayout" name="polygonWidthHorizontalLayout">
         <item>
-         <widget class="QSpinBox" name="polygonWidthSpinbox"/>
+         <widget class="QSpinBox" name="polygonWidthSpinbox">
+          <property name="minimum">
+           <number>10</number>
+          </property>
+          <property name="maximum">
+           <number>100</number>
+          </property>
+          <property name="value">
+           <number>40</number>
+          </property>
+         </widget>
         </item>
         <item>
          <widget class="QSlider" name="polygonWidthSlider">
+          <property name="minimum">
+           <number>10</number>
+          </property>
+          <property name="maximum">
+           <number>100</number>
+          </property>
+          <property name="value">
+           <number>40</number>
+          </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -96,5 +153,102 @@
   </widget>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>idealSegmentLengthSlider</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>idealSegmentLengthSpinbox</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>520</x>
+     <y>80</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>172</x>
+     <y>80</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>idealLegLengthSlider</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>idealLegLengthSpinbox</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>520</x>
+     <y>46</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>172</x>
+     <y>46</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>idealSegmentLengthSpinbox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>idealSegmentLengthSlider</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>172</x>
+     <y>80</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>520</x>
+     <y>80</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>idealLegLengthSpinbox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>idealLegLengthSlider</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>172</x>
+     <y>46</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>520</x>
+     <y>46</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>polygonWidthSlider</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>polygonWidthSpinbox</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>520</x>
+     <y>114</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>172</x>
+     <y>114</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>polygonWidthSpinbox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>polygonWidthSlider</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>172</x>
+     <y>114</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>520</x>
+     <y>114</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
