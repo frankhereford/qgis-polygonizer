@@ -238,7 +238,6 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 if intersection.geometry().intersects(road.geometry()):
                     LEG_LENGTH = GOAL_LEG_LENGTH
                     # we have a road that is a leg, let's compute the length of the leg
-                    # FIXME we need some snapping flexibility, because this can leave slivers
                     if road.geometry().length() < LEG_LENGTH * 2:
                         LEG_LENGTH = road.geometry().length() / 2
                     elif (road.geometry().length() - (LEG_LENGTH * 2)) < MAX_SNAP_LENGTH:
