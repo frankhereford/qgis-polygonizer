@@ -199,9 +199,9 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         interconnect_polygons_provider = interconnect_polygons_layer.dataProvider()
 
         # ingest parameters of the polygonization algorithm
-        GOAL_SEGMENT_LENGTH = self.goalSegmentLength.value()
-        GOAL_LEG_LENGTH = self.goalLegLength.value()
-        BUFFER_LENGTH = self.polygonWidth.value()
+        GOAL_SEGMENT_LENGTH = self.idealSegmentLengthSpinbox.value()
+        GOAL_LEG_LENGTH = self.idealLegLengthSpinbox.value()
+        BUFFER_LENGTH = self.polygonWidthSpinbox.value()
         BUFFER_DETAIL = 20
 
         end_cap_style = Qgis.EndCapStyle(2)  # flat
