@@ -103,6 +103,7 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 project.removeMapLayer(layer.id())
 
         # create a group and move it to the top of the layer list for output
+        # FIXME this would be a great parameter
         output_group_name = "Polygonizer Output"
         layer_root = project.layerTreeRoot()
         group = layer_root.findGroup(output_group_name)
