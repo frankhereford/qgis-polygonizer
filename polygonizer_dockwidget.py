@@ -241,7 +241,7 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     # FIXME we need some snapping flexibility, because this can leave slivers
                     if road.geometry().length() < LEG_LENGTH * 2:
                         LEG_LENGTH = road.geometry().length() / 2
-                    elif road.geometry().length() - LEG_LENGTH * 2 < MAX_SNAP_LENGTH:
+                    elif (road.geometry().length() - (LEG_LENGTH * 2)) < MAX_SNAP_LENGTH:
                         LEG_LENGTH = road.geometry().length() / 2
 
                     # we don't know the start-to-stop orientation of the line, so let's grab some endpoints and look for intersections
