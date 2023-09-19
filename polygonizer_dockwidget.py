@@ -515,7 +515,6 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         found_overlapping_feature_count += 1
                         has_overlaps = True  # Set flag to True since we found an overlap
 
-                        # Your code to handle the overlapping features
                         if geometry1.area() < geometry2.area():
 
                             # Clip the smaller geometry out of the larger one
