@@ -461,7 +461,12 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         segmented_roads_layer.updateExtents()
         interconnect_polygons_layer.updateExtents()
 
-        merged_layer = QgsVectorLayer("Polygon?crs=epsg:2277", "Workspace: Pre-clip Polygons", "memory")
+        # add our new layer with our intersectional polygons to the output group
+        interconnect_added_layer = project.addMapLayer(interconnect_polygons_layer)
+        self.add_layer_to_output_group(
+            interconnect_added_layer, output_group_name, layer_root
+        )
+        merged_layer = QgsVectorLayer("Polygon?crs=epsg:2277", "Workspace: Clipped Output", "memory")
 
         # Get the data provider to edit the layer
         provider = merged_layer.dataProvider()
@@ -522,11 +527,7 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             # Update geometry immediately in the data provider
                             provider.changeGeometryValues({feature1.id(): new_geom})
  
-        # add our new layer with our intersectional polygons to the output group
-        interconnect_added_layer = project.addMapLayer(interconnect_polygons_layer)
-        self.add_layer_to_output_group(
-            interconnect_added_layer, output_group_name, layer_root
-        )
+
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
