@@ -487,7 +487,6 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         pass_count = 0
         while has_overlaps: # just enough
             pass_count += 1
-            # QgsMessageLog.logMessage(f"Pass #{pass_count}", "Polygonizer")
             found_overlapping_feature_count = 0
             has_overlaps = False  # Reset flag for each iteration
 
@@ -510,8 +509,6 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     if geometry1.intersection(geometry2) and overlap_area > 0.01:
                         found_overlapping_feature_count += 1
                         has_overlaps = True  # Set flag to True since we found an overlap
-                        # QgsMessageLog.logMessage(f"{found_overlaps}: Feature {feature1.id()} overlaps with feature {feature2.id()}", "Polygonizer")
-                        # QgsMessageLog.logMessage(f"Overlap area: {overlap_area}", "Polygonizer")
 
                         # Your code to handle the overlapping features
                         if geometry1.area() < geometry2.area():
@@ -525,8 +522,6 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             # Update geometry immediately in the data provider
                             provider.changeGeometryValues({feature1.id(): new_geom})
  
-            # QgsMessageLog.logMessage(f"Previous Found Count: {found_overlaps}", "Polygonizer")
-
         # add our new layer with our intersectional polygons to the output group
         interconnect_added_layer = project.addMapLayer(interconnect_polygons_layer)
         self.add_layer_to_output_group(
