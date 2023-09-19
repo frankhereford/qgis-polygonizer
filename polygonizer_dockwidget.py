@@ -526,7 +526,6 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             
                             # Update geometry immediately in the data provider
                             provider.changeGeometryValues({feature1.id(): new_geom})
- 
 
 
     def closeEvent(self, event):
