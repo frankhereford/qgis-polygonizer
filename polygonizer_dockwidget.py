@@ -483,17 +483,13 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # Flag to track if any overlapping pairs are found
         has_overlaps = True
+        # keep track of how many iterations for debugging
         pass_count = 0
-        #for _ in iter([True]): # just once
-        #while pass_count < 5: # five times always
         while has_overlaps: # just enough
             pass_count += 1
             # QgsMessageLog.logMessage(f"Pass #{pass_count}", "Polygonizer")
-            found_overlaps = 0
+            found_overlapping_feature_count = 0
             has_overlaps = False  # Reset flag for each iteration
-
-            # Initialize a list to hold the modified features
-            modified_features = []
 
             # Iterate over each feature in the merged_layer
             for feature1 in merged_layer.getFeatures():
@@ -512,7 +508,7 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                     # Check for intersection
                     if geometry1.intersection(geometry2) and overlap_area > 0.01:
-                        found_overlaps += 1
+                        found_overlapping_feature_count += 1
                         has_overlaps = True  # Set flag to True since we found an overlap
                         # QgsMessageLog.logMessage(f"{found_overlaps}: Feature {feature1.id()} overlaps with feature {feature2.id()}", "Polygonizer")
                         # QgsMessageLog.logMessage(f"Overlap area: {overlap_area}", "Polygonizer")
@@ -529,15 +525,7 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             # Update geometry immediately in the data provider
                             provider.changeGeometryValues({feature1.id(): new_geom})
  
-                            # Add it to the list of modified features
-                            # modified_features.append(feature1)
-
-            # Update the layer with modified features
-            #if modified_features:
-                #provider = merged_layer.dataProvider()
-                #provider.changeGeometryValues({f.id(): f.geometry() for f in modified_features})
-
-            QgsMessageLog.logMessage(f"Previous Found Count: {found_overlaps}", "Polygonizer")
+            # QgsMessageLog.logMessage(f"Previous Found Count: {found_overlaps}", "Polygonizer")
 
         # add our new layer with our intersectional polygons to the output group
         interconnect_added_layer = project.addMapLayer(interconnect_polygons_layer)
