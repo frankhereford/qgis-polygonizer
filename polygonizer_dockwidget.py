@@ -483,12 +483,12 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # Flag to track if any overlapping pairs are found
         has_overlaps = True
-        # while has_overlaps:
         pass_count = 0
-        #for _ in iter([True]):
-        while pass_count < 5:
+        #for _ in iter([True]): # just once
+        #while pass_count < 5: # five times always
+        while has_overlaps: # just enough
             pass_count += 1
-            QgsMessageLog.logMessage(f"Pass #{pass_count}", "Polygonizer")
+            # QgsMessageLog.logMessage(f"Pass #{pass_count}", "Polygonizer")
             found_overlaps = 0
             has_overlaps = False  # Reset flag for each iteration
 
@@ -510,14 +510,12 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     intersection_geom = geometry1.intersection(geometry2)
                     overlap_area = intersection_geom.area()
 
-                    QgsMessageLog.logMessage(f"Overlap area: {overlap_area}", "Polygonizer")
-
-                    
                     # Check for intersection
                     if geometry1.intersection(geometry2) and overlap_area > 0.01:
                         found_overlaps += 1
                         has_overlaps = True  # Set flag to True since we found an overlap
-                        QgsMessageLog.logMessage(f"{found_overlaps}: Feature {feature1.id()} overlaps with feature {feature2.id()}", "Polygonizer")
+                        # QgsMessageLog.logMessage(f"{found_overlaps}: Feature {feature1.id()} overlaps with feature {feature2.id()}", "Polygonizer")
+                        # QgsMessageLog.logMessage(f"Overlap area: {overlap_area}", "Polygonizer")
 
                         # Your code to handle the overlapping features
                         if geometry1.area() < geometry2.area():
