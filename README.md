@@ -16,8 +16,8 @@ The software is available as an experimental plugin in the official QGIS plugin 
 
 ## Features to Implement
 
-* [ ] Ensuring that polygons created do not overlap with each other by finding intersections between them and trimming polygon area where needed
-* [ ] Intersection Leg snapping so that when intermediate segment lengths are sufficiently small, the legs of the intersections will extend to prevent tiny slivers of intersectional roadway polygons
+* [x] Ensuring that polygons created do not overlap with each other by finding intersections between them and trimming polygon area where needed
+* [x] Intersection Leg snapping so that when intermediate segment lengths are sufficiently small, the legs of the intersections will extend to prevent tiny slivers of intersectional roadway polygons
 * [ ] Bringing along attributes from the input line network to allow for polygons to be traced back to the constituent line segments that influenced their shape
-* [ ] Ability to provide a typed-in, integer value to the process parameters
+* [x] Ability to provide a typed-in, integer value to the process parameters
 * [ ] Ability to designate a attribute of the input features which govern a set of presets for the polygon creation process parameters for that individual segment, such as `street_level` for example.
