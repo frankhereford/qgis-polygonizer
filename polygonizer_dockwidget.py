@@ -95,6 +95,9 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def eventPushButtonRunPolygonizerOnClick(self):
         project = QgsProject.instance()
 
+        # Capture the currently selected layer, so we can set it active again when we're done
+        current_layer = iface.activeLayer()
+
         # clean up previous executions workspace layers
         layers = project.mapLayers()
         for layer_key in layers:
@@ -528,6 +531,9 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             # Update geometry immediately in the data provider
                             provider.changeGeometryValues({feature1.id(): new_geom})
 
+
+        # set the "active layer" back to what it was when we started
+        iface.setActiveLayer(current_layer)
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
