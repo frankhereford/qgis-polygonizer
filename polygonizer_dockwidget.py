@@ -200,9 +200,10 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         interconnect_polygons_provider = interconnect_polygons_layer.dataProvider()
 
         # ingest parameters of the polygonization algorithm
-        GOAL_SEGMENT_LENGTH = self.goalSegmentLength.value()
-        GOAL_LEG_LENGTH = self.goalLegLength.value()
-        BUFFER_LENGTH = self.polygonWidth.value()
+        GOAL_SEGMENT_LENGTH = self.idealSegmentLengthSpinbox.value()
+        GOAL_LEG_LENGTH = self.idealLegLengthSpinbox.value()
+        BUFFER_LENGTH = self.polygonWidthSpinbox.value()
+        MAX_SNAP_LENGTH = self.maxSnapLengthSpinbox.value()
         BUFFER_DETAIL = 20
 
         end_cap_style = Qgis.EndCapStyle(2)  # flat
@@ -238,8 +239,9 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 if intersection.geometry().intersects(road.geometry()):
                     LEG_LENGTH = GOAL_LEG_LENGTH
                     # we have a road that is a leg, let's compute the length of the leg
-                    # FIXME we need some snapping flexibility, because this can leave slivers
                     if road.geometry().length() < LEG_LENGTH * 2:
+                        LEG_LENGTH = road.geometry().length() / 2
+                    elif (road.geometry().length() - (LEG_LENGTH * 2)) < MAX_SNAP_LENGTH:
                         LEG_LENGTH = road.geometry().length() / 2
 
                     # we don't know the start-to-stop orientation of the line, so let's grab some endpoints and look for intersections
