@@ -103,6 +103,7 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 project.removeMapLayer(layer.id())
 
         # create a group and move it to the top of the layer list for output
+        # FIXME this would be a great parameter
         output_group_name = "Polygonizer Output"
         layer_root = project.layerTreeRoot()
         group = layer_root.findGroup(output_group_name)
@@ -465,6 +466,66 @@ class PolygonizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.add_layer_to_output_group(
             interconnect_added_layer, output_group_name, layer_root
         )
+        merged_layer = QgsVectorLayer("Polygon?crs=epsg:2277", "Workspace: Clipped Output", "memory")
+
+        # Get the data provider to edit the layer
+        provider = merged_layer.dataProvider()
+
+        # Initialize a list to hold new features
+        new_features = []
+
+        for feature in intersection_polygons_layer.getFeatures():
+            new_features.append(feature)
+
+        for feature in interconnect_polygons_layer.getFeatures():
+            new_features.append(feature)
+
+        # Add new features to the merged layer
+        provider.addFeatures(new_features)
+
+        # Add the merged layer to the map
+        QgsProject.instance().addMapLayer(merged_layer)
+
+        # Flag to track if any overlapping pairs are found
+        has_overlaps = True
+        # keep track of how many iterations for debugging
+        pass_count = 0
+        while has_overlaps: # just enough
+            pass_count += 1
+            found_overlapping_feature_count = 0
+            has_overlaps = False  # Reset flag for each iteration
+
+            # Iterate over each feature in the merged_layer
+            for feature1 in merged_layer.getFeatures():
+                geometry1 = feature1.geometry()
+                
+                # Nested iteration to compare with every other feature
+                for feature2 in merged_layer.getFeatures():
+                    # Skip self-comparison
+                    if feature1.id() == feature2.id():
+                        continue
+                    
+                    geometry2 = feature2.geometry()
+                    
+                    intersection_geom = geometry1.intersection(geometry2)
+                    overlap_area = intersection_geom.area()
+
+                    # Check for intersection
+                    if geometry1.intersection(geometry2) and overlap_area > 0.01:
+                        found_overlapping_feature_count += 1
+                        has_overlaps = True  # Set flag to True since we found an overlap
+
+                        if geometry1.area() < geometry2.area():
+
+                            # Clip the smaller geometry out of the larger one
+                            new_geom = geometry1.difference(geometry2)
+                            
+                            # Update the feature's geometry
+                            feature1.setGeometry(new_geom)
+                            
+                            # Update geometry immediately in the data provider
+                            provider.changeGeometryValues({feature1.id(): new_geom})
+
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
