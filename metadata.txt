@@ -6,7 +6,7 @@
 name=COA TPW Polygonizer
 qgisMinimumVersion=3.0
 description=This plugin can be used to create polygons that track the shape of a line network, including the proper handling of intersections with common nodes of the line segments.
-version=0.1
+version=0.2.1
 author=DTS
 email=frank.hereford@austintexas.gov
 
